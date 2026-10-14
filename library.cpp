@@ -51,6 +51,12 @@ vector<Book*> Library::searchBooksByTitle(const string& title) {
             results.push_back(book.get());
         }
     }
+
+    // Tri STL par titre
+    sort(results.begin(), results.end(), [](Book* a, Book* b) {
+        return a->getTitle() < b->getTitle();
+    });
+
     return results;
 }
 
