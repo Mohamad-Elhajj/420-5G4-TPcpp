@@ -1,5 +1,9 @@
 #include <iostream>
 #include <algorithm>
+#include <fstream>
+#include <chrono>
+#include <iomanip>
+#include <sstream>
 
 #include "library.h"
 
@@ -8,9 +12,26 @@ using namespace std;
 // Constructor
 Library::Library() {}
 
+// Fonction utilitaire pour écrire dans le journal d'activités (activity.log)
+void logActivity(const string& action, const string& details) {
+    ofstream logFile("../data/activity.log", ios::app);
+    if (logFile.is_open()) {
+        auto now = chrono::system_clock::now();
+        auto in_time_t = chrono::system_clock::to_time_t(now);
+        
+        stringstream ss;
+        ss << put_time(localtime(&in_time_t), "%Y-%m-%d %H:%M:%S");
+        
+        logFile << ss.str() << " - [" << action << "] " << details << "\n";
+    }
+}
+
 // Add book to library
 void Library::addBook(const Book& book) {
     books.push_back(make_unique<Book>(book));
+
+    string details = book.getTitle() + "|" + book.getAuthor() + "|" + book.getISBN() + "|1|";
+    logActivity("AJOUT LIVRE", details);
 }
 
 // Remove book from library
@@ -21,7 +42,15 @@ bool Library::removeBook(const string& isbn) {
         });
     
     if (it != books.end()) {
+        string title = (*it)->getTitle();
+        string author = (*it)->getAuthor();
+        string bookIsbn = (*it)->getISBN();
+
         books.erase(it);
+
+        string details = title + "|" + author + "|" + bookIsbn;
+        logActivity("SUPPRESSION LIVRE", details);
+
         return true;
     }
     return false;
@@ -127,6 +156,9 @@ void Library::addUser(User& user) {
     }
     
     users.push_back(make_unique<User>(user));
+
+    string details = user.getName() + "|" + user.getUserId();
+    logActivity("AJOUT UTILISATEUR", details);
 }
 
 // Find user by ID
@@ -155,8 +187,14 @@ bool Library::checkOutBook(const string& isbn, const string& userId) {
     User* user = findUserById(userId);
     
     if (book && user && book->getAvailability()) {
+        string borrowerName = user->getName();
         book->checkOut(user->getUserId());
         user->borrowBook(isbn);
+
+        // Format requis pour le journal d'activités
+        string details = book->getTitle() + "|" + book->getAuthor() + "|" + book->getISBN() + "|0|" + borrowerName;
+        logActivity("EMPRUNT", details);
+
         return true;
     }
     return false;
@@ -168,13 +206,25 @@ bool Library::returnBook(const string& isbn) {
     
     if (book && !book->getAvailability()) {
         // Find the user who borrowed this book
+        string borrowerId = book->getBorrowerId();
+        string borrowerName = "Inconnu";
+
         for (auto& user : users) {
             if (user->hasBorrowedBook(isbn)) {
                 user->returnBook(isbn);
                 break;
             }
         }
+
+        string title = book->getTitle();
+        string author = book->getAuthor();
+        string bookIsbn = book->getISBN();
+
         book->returnBook();
+
+        string details = title + "|" + author + "|" + bookIsbn + "|1|" + borrowerName;
+        logActivity("RETOUR", details);
+
         return true;
     }
     return false;
