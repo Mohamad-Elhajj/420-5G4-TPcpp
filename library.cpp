@@ -74,6 +74,15 @@ vector<Book*> Library::searchBooksByAuthor(const string& author) {
             results.push_back(book.get());
         }
     }
+
+    // Tri STL par ordre alphabétique de l'auteur (et par titre en cas d'égalité)
+    sort(results.begin(), results.end(), [](Book* a, Book* b) {
+        if (a->getAuthor() == b->getAuthor()) {
+            return a->getTitle() < b->getTitle();
+        }
+        return a->getAuthor() < b->getAuthor();
+    });
+
     return results;
 }
 
@@ -85,6 +94,12 @@ vector<Book*> Library::getAvailableBooks() {
             available.push_back(book.get());
         }
     }
+
+    // Tri STL par titre
+    sort(available.begin(), available.end(), [](Book* a, Book* b) {
+        return a->getTitle() < b->getTitle();
+    });
+    
     return available;
 }
 
@@ -94,6 +109,12 @@ vector<Book*> Library::getAllBooks() {
     for (auto& book : books) {
         allBooks.push_back(book.get());
     }
+
+    // Tri STL par titre pour s'assurer que l'affichage global est toujours ordonné
+    sort(allBooks.begin(), allBooks.end(), [](Book* a, Book* b) {
+        return a->getTitle() < b->getTitle();
+    });
+
     return allBooks;
 }
 
@@ -124,6 +145,7 @@ vector<User*> Library::getAllUsers() {
     for (auto& user : users) {
         allUsers.push_back(user.get());
     }
+
     return allUsers;
 }
 
@@ -160,15 +182,17 @@ bool Library::returnBook(const string& isbn) {
 
 // Display all books
 void Library::displayAllBooks() {
-    if (books.empty()) {
+    auto booksList = getAllBooks();
+
+    if (booksList.empty()) {
         cout << "Aucun livre dans la bibliothèque.\n";
         return;
     }
     
     cout << "\n=== TOUS LES LIVRES ===\n";
-    for (size_t i = 0; i < books.size(); ++i) {
+    for (size_t i = 0; i < booksList.size(); ++i) {
         cout << "\nLivre " << (i + 1) << " :\n";
-        cout << books[i]->toString() << "\n";
+        cout << booksList[i]->toString() << "\n";
         cout << "-------------------------\n";
     }
 }
@@ -192,15 +216,17 @@ void Library::displayAvailableBooks() {
 
 // Display all users
 void Library::displayAllUsers() {
-    if (users.empty()) {
+    auto usersList = getAllUsers();
+
+    if (usersList.empty()) {
         cout << "Aucun utilisateur enregistré.\n";
         return;
     }
     
     cout << "\n=== TOUS LES UTILISATEURS ===\n";
-    for (size_t i = 0; i < users.size(); ++i) {
+    for (size_t i = 0; i < usersList.size(); ++i) {
         cout << "\nUtilisateur " << (i + 1) << " :\n";
-        cout << users[i]->toString() << "\n";
+        cout << usersList[i]->toString() << "\n";
         cout << "------------------------------\n";
     }
 }
